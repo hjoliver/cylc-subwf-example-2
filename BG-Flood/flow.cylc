@@ -1,0 +1,27 @@
+#!Jinja2
+
+# If run standalone, output to workflow share directory.
+# Else controller workflow should set to its share directory.
+
+{% set IO_DIR = IO_DIR | default("$CYLC_WORKFLOW_SHARE_DIR") %}
+{% set DOMAIN = DOMAIN | default("Akl") %}
+{% set SUBNAME = SUBNAME | default("BG-Flood") %}
+
+[scheduler]
+   [[events]]
+      stall timeout = PT15S
+      abort on stall timeout = True
+
+[scheduling]
+   [[graph]]
+      R1 = "bg1 => bg2 & bg3 => bg4"
+
+[runtime]
+   [[root]]
+      pre-script = """
+         sleep 5
+         hello.sh
+      """
+   [[bg1, bg2, bg3]]
+   [[bg4]]
+      script = "touch {{IO_DIR}}/{{DOMAIN}}.{{SUBNAME}}.done"

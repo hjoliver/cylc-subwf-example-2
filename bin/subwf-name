@@ -1,0 +1,18 @@
+#!/bin/bash
+set -eu
+
+# Construct subworkflow name from mand workflow ID and component sub-dirs.
+
+if [[ -d $CYLC_WORKFLOW_RUN_DIR/_cylc-install ]]; then 
+   # Main has no run-name
+   SUBWF_NAME=${CYLC_WORKFLOW_ID}
+else
+   # Main has a run-name
+   SUBWF_NAME=${CYLC_WORKFLOW_ID%/*}-${CYLC_WORKFLOW_ID##*/}
+fi
+
+for CPT in $@; do
+   SUBWF_NAME=${SUBWF_NAME}/$CPT
+done
+
+echo $SUBWF_NAME

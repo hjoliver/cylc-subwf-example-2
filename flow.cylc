@@ -1,0 +1,45 @@
+#!Jinja2
+{% import "inputs.j2" as inputs %}
+
+[scheduling]
+   [[queues]]
+      [[[default]]]
+         limit = 2
+         members = SUBWORKFLOWS
+   [[graph]]
+      R1 = """
+{% for DOM in inputs.DOMAINS %}
+         Prep => GeoFabrics_{{DOM}} => BG-Flood_{{DOM}}
+   {% if inputs.MODE == "Scenario" %}
+         Prep => Designstorm_{{DOM}} => TopNet_S_{{DOM}} => BG-Flood_{{DOM}}
+   {% elif inputs.MODE == "Event" %}
+         Prep => Event_{{DOM}} => TopNet_E_{{DOM}} => BG-Flood_{{DOM}}
+   {% else %}
+      {{ raise("Illegal inputs.MODE value: " + inputs.MODE) }}
+   {% endif %}
+         BG-Flood_{{DOM}} => Housekeep_{{DOM}} => Collate
+{% endfor %}
+      """
+[runtime]
+   [[Prep]]
+      script = "sleep 5"
+   [[SUBWORKFLOWS]]
+{% for DOM in inputs.DOMAINS %}
+   {% for SRC in ["GeoFabrics", "Designstorm", "TopNet_S", "TopNet_E", "BG-Flood"] %}
+   [[{{SRC}}_{{DOM}}]]
+      inherit = SUBWORKFLOWS
+      script = "subwf-run {{SRC}} $(subwf-name {{DOM}} {{SRC}}) \
+         1/{{inputs.FINAL_TASK[SRC]}}"
+      err-script = "cylc stop --now --now $(subwf-name {{DOM}} {{SRC}}) \
+         >/dev/null 2&>1 || true"
+      [[[environment]]]
+         SUBWF_PLAY_CMD_ARGS = '--set IO_DIR=\"$CYLC_WORKFLOW_SHARE_DIR\" \
+           --set DOMAIN=\"{{DOM}}\" --set SUBNAME=\"{{SRC}}\"'
+   {% endfor %}
+   [[Housekeep_{{DOM}}]]
+      script = "cylc clean -y $(subwf-name {{DOM}})"
+{% endfor %}
+   [[Collate]]
+      script = """
+         ls $CYLC_WORKFLOW_SHARE_DIR/*.done > $CYLC_WORKFLOW_SHARE_DIR/RESULTS
+      """

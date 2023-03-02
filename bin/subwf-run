@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -eu
+
+# CLI inputs
+SUBWF_SRC_DIR=$1  # relative to run dir
+SUBWF_RUN_NAME=$2
+SUBWF_END_TASK="$3"  # e.g. 1/foo 
+
+# Environment inputs
+SUBWF_DETACH=${SUBWF_DETACH:-false}
+SUBWF_RERUN_FROM_SCRATCH=${SUBWF_RERUN_FROM_SCRATCH:-false}
+SUBWF_PING_INTERVAL=${SUBWF_PING_INTERVAL:-30}
+SUBWF_PLAY_CMD_ARGS=${SUBWF_PLAY_CMD_ARGS:-}  # e.g. "--set-file='stuff.j2'"
+
+if $SUBWF_RERUN_FROM_SCRATCH || (( CYLC_TASK_SUBMIT_NUMBER == 1 )) ; then
+   # Install to a new run dir, to run from scratch.
+   cylc install -n "$SUBWF_RUN_NAME" "$CYLC_WORKFLOW_RUN_DIR/${SUBWF_SRC_DIR}"
+else
+   # Reinstall the existing run dir from the installed source
+   cylc reinstall "$SUBWF_RUN_NAME"
+fi
+
+if $SUBWF_DETACH; then
+   cylc play ${SUBWF_PLAY_CMD_ARGS} $SUBWF_RUN_NAME
+   # wait till the sub-workflow stops running
+   while cylc ping $SUBWF_RUN_NAME; do
+      sleep $SUBWF_PING_INTERVAL
+   done
+else
+   cylc play --no-detach ${SUBWF_PLAY_CMD_ARGS} $SUBWF_RUN_NAME
+fi
+
+# Sub-workflow stopped, check that it succeeded.
+cylc workflow-state --max-polls=1 --task=${SUBWF_END_TASK#*/} \
+    --point=${SUBWF_END_TASK%/*} --status=succeeded $SUBWF_RUN_NAME

@@ -1,0 +1,26 @@
+#!Jinja2
+
+{% set DOMAINS =
+   [
+     "Wgn",
+     "Akl",
+     "Chc" 
+   ]
+%}
+
+{% set MODE = "Scenario" %}
+
+{# set MODE = "Event" #}
+{# set DATE = "2023-01-01" #}
+
+{# Final task in each sub-workflow #}
+
+{% set FINAL_TASK =
+   {
+      "GeoFabrics": "gf4",
+      "Designstorm": "ds4",
+      "TopNet_S": "ts4",
+      "TopNet_E": "te4",
+      "BG-Flood": "bg4",
+   }
+%}

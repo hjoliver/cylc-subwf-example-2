@@ -1,0 +1,42 @@
+# Control workflow and sub-workflows
+
+For general sub-workflow documentation see:
+https://github.com/hjoliver/cylc-subwf-example#readme
+
+## To run
+
+$ pwd
+~/cylc-run/flood
+$ cylc vip .
+$ watch -n 1 "cylc scan"
+$ watch -n 1 "tree ~/cylc-run/flood/runN/share"  # sub-wf outputs
+$ cylc gui
+
+## Notes
+
+The main workflow ID will be flood/run1.
+
+It's sub-workflows will have IDs like flood-run1/Akl/TopNet_S
+
+Each sub-workflow instance (reads and) writes import files to the main workflow
+share directory.
+
+Sub-workflow run directories are cleaned up by the main workflow, after each
+domain is finished.
+
+A task at the end of the main workflow collates results from all sub-workflows.
+
+Parameters are passed into sub-workflow instances via Jinja2 variables set on
+the "cylc play" command line ("--set"; could also use "--set-file").
+
+Controller tasks in the main workflow will register as failed if their
+sub-workflow instance stopped without completing the specified final task.
+
+If you kill a controller tasks, it's sub-workflow will be killed by the err-script
+handler, even if running sub-workflows in detached mode. 
+
+## TODO
+
+Sub-workflow sources in separate git repos with switchable installation:
+   - install task for standalone use
+   - central task install for controller use
