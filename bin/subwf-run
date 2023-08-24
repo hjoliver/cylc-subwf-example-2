@@ -5,7 +5,6 @@ set -eu
 # CLI inputs
 SUBWF_SRC_DIR=$1  # relative to run dir
 SUBWF_RUN_NAME=$2
-SUBWF_END_TASK="$3"  # e.g. 1/foo 
 
 # Environment inputs
 SUBWF_DETACH=${SUBWF_DETACH:-false}
@@ -31,6 +30,13 @@ else
    cylc play --no-detach ${SUBWF_PLAY_CMD_ARGS} $SUBWF_RUN_NAME
 fi
 
-# Sub-workflow stopped, check that it succeeded.
-cylc workflow-state --max-polls=1 --task=${SUBWF_END_TASK#*/} \
-    --point=${SUBWF_END_TASK%/*} --status=succeeded $SUBWF_RUN_NAME
+# sub-workflow stopped, but did it complete?
+# task_pool DB table should be empty.
+TASK_POOL=$(sqlite3 "${HOME}/cylc-run/${SUBWF_RUN_NAME}/runN/log/db" "select * from task_pool")
+if [[ -z "$TASK_POOL" ]]; then
+    echo "Sub-workflow $SUBWF_RUN_NAME completed."
+    exit 0
+else
+    echo "Sub-workflow $SUBWF_RUN_NAME stopped early."
+    exit 1
+fi

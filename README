@@ -30,10 +30,10 @@ Parameters are passed into sub-workflow instances via Jinja2 variables set on
 the "cylc play" command line ("--set"; could also use "--set-file").
 
 Controller tasks in the main workflow will register as failed if their
-sub-workflow instance stopped without completing the specified final task.
+sub-workflow instance fails or gets stopped early (e.g. by stop command).
 
-If you kill a controller tasks, it's sub-workflow will be killed by the err-script
-handler, even if running sub-workflows in detached mode. 
+If you kill a controller tasks, it's sub-workflow will be killed by the
+err-script handler, even if running sub-workflows in detached mode. 
 
 ## TODO
 

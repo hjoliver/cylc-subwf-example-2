@@ -28,8 +28,7 @@
    {% for SRC in ["GeoFabrics", "Designstorm", "TopNet_S", "TopNet_E", "BG-Flood"] %}
    [[{{SRC}}_{{DOM}}]]
       inherit = SUBWORKFLOWS
-      script = "subwf-run {{SRC}} $(subwf-name {{DOM}} {{SRC}}) \
-         1/{{inputs.FINAL_TASK[SRC]}}"
+      script = "subwf-run {{SRC}} $(subwf-name {{DOM}} {{SRC}})"
       err-script = "cylc stop --now --now $(subwf-name {{DOM}} {{SRC}}) \
          >/dev/null 2&>1 || true"
       [[[environment]]]
